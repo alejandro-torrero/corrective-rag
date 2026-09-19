@@ -6,5 +6,5 @@ from graph.graph import app
 
 if __name__ == "__main__":
     print("Start")
-    
-    print(app.invoke(input={"question":"What is agent memory?"}))
+
+    print(app.invoke(input={"question": "What is agent memory?"}))

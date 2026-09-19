@@ -1,6 +1,8 @@
 from dotenv import load_dotenv
 from langgraph.graph import END, StateGraph
 
+from graph.chains.answer_grader import answer_grader
+from graph.chains.hallucination_grader import hallucination_grader
 from graph.consts import GENERATE, GRADE_DOCUMENTS, RETRIEVE, WEBSEARCH
 from graph.nodes import generate, grade_documents, retrieve, web_search
 from graph.state import GraphState
@@ -19,6 +21,32 @@ def decide_to_generate(state):
         return GENERATE
 
 
+def grade_generation_grounded_in_documents_and_questions(state: GraphState) -> str:
+    print("Check hallucinations")
+
+    question = state["question"]
+    documents = state["documents"]
+    generation = state["generation"]
+
+    score = hallucination_grader.invoke(
+        {"documents": documents, "generation": generation}
+    )
+
+    if hallucination_grade := score.binary_score:
+        print("Generation is grouneded in the documents")
+        score = answer_grader.invoke({"question": question, "generation": generation})
+
+        if answer_grade := score.binary_score:
+            print("Valid answer")
+            return "useful"
+        else:
+            print("Decision: answer is not useful")
+            return "not useful"
+    else:
+        print("Decision: generation is not grounded")
+        return "not supported"
+
+
 flow = StateGraph(GraphState)
 
 flow.add_node(RETRIEVE, retrieve)
@@ -32,6 +60,12 @@ flow.add_conditional_edges(
     GRADE_DOCUMENTS,
     decide_to_generate,
     path_map={WEBSEARCH: WEBSEARCH, GENERATE: GENERATE},
+)
+
+flow.add_conditional_edges(
+    GENERATE,
+    grade_generation_grounded_in_documents_and_questions,
+    path_map={"not supported": GENERATE, "useful": END, "not useful": WEBSEARCH},
 )
 
 flow.add_edge(WEBSEARCH, GENERATE)
