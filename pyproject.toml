@@ -1,0 +1,34 @@
+[project]
+name = "corrective-rag"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Alejandro Torrero", email = "alejandro@lostorrero.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "beautifulsoup4>=4.15.0",
+    "black>=26.5.1",
+    "isort>=9.0.1",
+    "langchain>=1.4.1",
+    "langchain-chroma>=1.1.0",
+    "langchain-ollama>=1.1.0",
+    "langchain-tavily>=0.2.18",
+    "langchain-text-splitters>=1.1.2",
+    "langchain-unstructured>=1.0.1",
+    "langchainhub>=0.1.21",
+    "langgraph>=1.2.11",
+    "pytest>=9.1.1",
+    "python-dotenv>=1.2.3",
+    "tavily>=1.1.0",
+    "tavily-python>=0.8.3",
+    "unstructured>=0.27.6",
+]
+
+[project.scripts]
+corrective-rag = "corrective_rag:main"
+
+[build-system]
+requires = ["uv_build>=0.12.13,<0.13.0"]
+build-backend = "uv_build"
