@@ -76,7 +76,6 @@ flow.set_conditional_entry_point(
     },
 )
 
-flow.set_entry_point(RETRIEVE)
 flow.add_edge(RETRIEVE, GRADE_DOCUMENTS)
 flow.add_conditional_edges(
     GRADE_DOCUMENTS,
