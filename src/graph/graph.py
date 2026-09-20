@@ -3,6 +3,7 @@ from langgraph.graph import END, StateGraph
 
 from graph.chains.answer_grader import answer_grader
 from graph.chains.hallucination_grader import hallucination_grader
+from graph.chains.router import RouteQuery, question_router
 from graph.consts import GENERATE, GRADE_DOCUMENTS, RETRIEVE, WEBSEARCH
 from graph.nodes import generate, grade_documents, retrieve, web_search
 from graph.state import GraphState
@@ -45,6 +46,18 @@ def grade_generation_grounded_in_documents_and_questions(state: GraphState) -> s
     else:
         print("Decision: generation is not grounded")
         return "not supported"
+    
+def route_question(state: GraphState) -> str:
+    print("Route question")
+    question = state["question"]
+    source: RouteQuery = question_router.invoke({"question": question})
+    if source.datasource == WEBSEARCH:
+        print("---ROUTE QUESTION TO WEB SEARCH---")
+        return WEBSEARCH
+    elif source.datasource == "vectorstore":
+        print("---ROUTE QUESTION TO RAG---")
+        return RETRIEVE
+
 
 
 flow = StateGraph(GraphState)
@@ -53,6 +66,15 @@ flow.add_node(RETRIEVE, retrieve)
 flow.add_node(GRADE_DOCUMENTS, grade_documents)
 flow.add_node(GENERATE, generate)
 flow.add_node(WEBSEARCH, web_search)
+
+
+flow.set_conditional_entry_point(
+    route_question,
+    {
+        WEBSEARCH: WEBSEARCH,
+        RETRIEVE: RETRIEVE,
+    },
+)
 
 flow.set_entry_point(RETRIEVE)
 flow.add_edge(RETRIEVE, GRADE_DOCUMENTS)
@@ -67,6 +89,8 @@ flow.add_conditional_edges(
     grade_generation_grounded_in_documents_and_questions,
     path_map={"not supported": GENERATE, "useful": END, "not useful": WEBSEARCH},
 )
+
+
 
 flow.add_edge(WEBSEARCH, GENERATE)
 
